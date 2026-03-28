@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-#from stmol import showmol
+from stmol import showmol
 import py3Dmol
 import requests
 import re
