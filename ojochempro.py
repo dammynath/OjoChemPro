@@ -33,15 +33,6 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    .chat-container {
-        max-height: 500px;
-        overflow-y: auto;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-    
     .chat-message {
         padding: 0.75rem;
         border-radius: 10px;
@@ -75,17 +66,6 @@ st.markdown("""
         cursor: pointer;
     }
     
-    .emergency-banner {
-        background: #dc3545;
-        color: white;
-        padding: 0.5rem;
-        text-align: center;
-        border-radius: 5px;
-        margin-bottom: 1rem;
-        cursor: pointer;
-        font-size: 0.85rem;
-    }
-    
     .molecule-card {
         background: white;
         padding: 0.75rem;
@@ -114,18 +94,22 @@ st.markdown("""
         transform: scale(1.02);
     }
     
-    div[data-testid="stVerticalBlock"] > div {
-        gap: 0.5rem;
+    /* Chat container styling */
+    .chat-history-container {
+        height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 1px solid #e0e0e0;
     }
     
-    /* Chat input styling */
-    .chat-input-container {
-        position: sticky;
-        bottom: 0;
-        background: white;
-        padding: 1rem 0;
-        border-top: 1px solid #e0e0e0;
-        margin-top: 1rem;
+    /* Clear fix */
+    .clearfix::after {
+        content: "";
+        clear: both;
+        display: table;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -448,7 +432,7 @@ def get_chatbot_response(query, safe_mode=True):
            f"• 'Molar mass of glucose'\n" \
            f"• 'Search PubChem for aspirin'\n\n" \
            f"**Current Mode:** {'🔒 Safe Mode (Educational)' if safe_mode else '🔬 Expert Mode'}"
-    
+
 # ========== MAIN APPLICATION ==========
 def main():
     # Header
@@ -679,63 +663,63 @@ def main():
                         else:
                             st.warning("Compound not found. Try a different name or check spelling.")
     
-    # Tab 4: Chemistry Chat - FIXED: Moved chat_input outside of any container
+    # Tab 4: Chemistry Chat - COMPLETELY RESTRUCTURED
     with tab4:
-        st.markdown("#### 💬 Chemistry Assistant")
-        
-        # Initialize chat history in session state if not exists
-        if "messages" not in st.session_state:
-            st.session_state.messages = [
+        # Initialize session state for chat if not exists
+        if "chat_messages" not in st.session_state:
+            st.session_state.chat_messages = [
                 {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
             ]
         
-        # Create a container for chat messages with fixed height and scrolling
-        chat_container = st.container()
+        # Create a container for the chat display with custom styling
+        chat_display = st.container()
         
-        # Display chat history in the container
-        with chat_container:
-            for message in st.session_state.messages:
+        # Display chat messages
+        with chat_display:
+            st.markdown('<div style="height: 450px; overflow-y: auto; padding: 1rem; background: #f8f9fa; border-radius: 10px; border: 1px solid #e0e0e0;">', unsafe_allow_html=True)
+            for message in st.session_state.chat_messages:
                 if message["role"] == "user":
-                    st.markdown(f'<div class="chat-message user-message" style="float: right; margin-left: auto;">{message["content"]}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="text-align: right; margin-bottom: 0.5rem;"><span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 80%;">{message["content"]}</span></div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="chat-message bot-message" style="float: left;">{message["content"]}</div>', unsafe_allow_html=True)
-                st.markdown("<br clear='both'>", unsafe_allow_html=True)
+                    st.markdown(f'<div style="text-align: left; margin-bottom: 0.5rem;"><span style="background: #f0f2f6; color: #1e1e2f; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 80%; border: 1px solid #e0e0e0;">{message["content"]}</span></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
         
-        # Quick suggestions row
+        # Quick suggestions
         st.markdown("#### Quick Suggestions")
-        cols = st.columns(4)
+        col1, col2, col3, col4 = st.columns(4)
         suggestions = [
-            "Show me benzene",
-            "Symmetry of water",
-            "Balance: H2 + O2 -> H2O",
-            "Molar mass of glucose"
+            ("🔬 Show benzene", "Show me benzene"),
+            ("🔄 Symmetry of water", "Symmetry of water"),
+            ("⚖️ Balance H2 + O2", "Balance: H2 + O2 -> H2O"),
+            ("📊 Molar mass glucose", "Molar mass of glucose")
         ]
         
-        for i, suggestion in enumerate(suggestions):
+        for i, (label, query) in enumerate(suggestions):
+            cols = [col1, col2, col3, col4]
             with cols[i]:
-                if st.button(suggestion, key=f"sugg_{i}"):
+                if st.button(label, key=f"quick_sugg_{i}", use_container_width=True):
                     # Add user message
-                    st.session_state.messages.append({"role": "user", "content": suggestion})
-                    # Get and add response
-                    response = get_chatbot_response(suggestion, safe_mode)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    st.session_state.chat_messages.append({"role": "user", "content": query})
+                    # Get response
+                    response = get_chatbot_response(query, safe_mode)
+                    st.session_state.chat_messages.append({"role": "assistant", "content": response})
                     st.rerun()
         
-        # Chat input - Now placed outside of any container and at the bottom
-        user_query = st.chat_input("Ask me about chemistry...", key="chat_input_main")
+        # Chat input - placed at the end, not inside any container
+        user_input = st.chat_input("Ask me about chemistry...", key="chemistry_chat_input")
         
-        if user_query:
+        if user_input:
             # Add user message
-            st.session_state.messages.append({"role": "user", "content": user_query})
+            st.session_state.chat_messages.append({"role": "user", "content": user_input})
             
             # Get response
             with st.spinner("Thinking..."):
-                response = get_chatbot_response(user_query, safe_mode)
+                response = get_chatbot_response(user_input, safe_mode)
             
             # Add assistant response
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.session_state.chat_messages.append({"role": "assistant", "content": response})
             
-            # Rerun to display new messages
+            # Rerun to update display
             st.rerun()
 
 if __name__ == "__main__":
