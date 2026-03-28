@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🧪 ChemAssistant Pro - Advanced 3D Chemistry Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .voice-btn, .mode-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-btn:hover, .mode-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .voice-btn.recording {
+            background: #ff4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .mode-indicator {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 15px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ff6b6b;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4caf50;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Emergency Banner - Minimized */
+        .emergency-mini {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .emergency-mini:hover {
+            background: #c82333;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            min-height: 700px;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .user-message .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 18px 18px 5px 18px;
+            max-width: 80%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .bot-message .message-content {
+            background: white;
+            border: 1px solid #e0e0e0;
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 18px 18px 18px 5px;
+            max-width: 90%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-size: 14px;
+        }
+
+        .input-area {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .formula-bar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .formula-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .formula-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Sidebar with Tabs */
+        .sidebar {
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 15px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Molecule Viewer */
+        .molecule-viewer-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #moleculeViewer {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #moleculeViewer:active {
+            cursor: grabbing;
+        }
+
+        .viewer-controls-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            font-size: 11px;
+        }
+
+        .viewer-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .viewer-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .viewer-btn.active {
+            background: #4caf50;
+        }
+
+        /* Search */
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .search-suggestion-item:hover {
+            background: #f0f0f0;
+        }
+
+        /* Molecule Library Grid */
+        .molecule-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .molecule-card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .molecule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .molecule-card .icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .molecule-card .name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .molecule-card .point-group {
+            font-size: 10px;
+            color: #667eea;
+            margin-top: 3px;
+        }
+
+        /* Symmetry Panel */
+        .symmetry-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .symmetry-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .symmetry-badge:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        /* Calculator */
+        .calc-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .calc-button {
+            width: 100%;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+
+        .result {
+            margin-top: 12px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .voice-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            font-size: 13px;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+
+        .mode-safe { background: #4caf50; color: white; }
+        .mode-expert { background: #ff9800; color: white; }
+
+        .typing-indicator {
+            display: inline-block;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 16px;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .chat-area {
+                height: 450px;
+            }
+            .sidebar {
+                height: auto;
+            }
+            .molecule-viewer-container {
+                height: 300px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="logo">
+                <h1><span>🧪</span> ChemAssistant Pro</h1>
+                <p>Advanced 3D Chemistry Lab with Symmetry Analysis</p>
+            </div>
+            <div class="controls">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceInput()">🎤 Voice Input</button>
+                <button class="mode-btn" onclick="showModeInfo()">ℹ️ Info</button>
+                <div class="mode-indicator">
+                    <span id="modeLabel">🔒 Safe</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="safeModeToggle" checked onchange="toggleMode()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="modeBadge" class="mode-badge mode-safe">Edu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimized Emergency Banner -->
+        <div class="emergency-mini" onclick="showEmergencyInfo()">
+            🚨 Emergency: Poison Control 1-800-222-1222 | CHEMTREC 1-800-424-9300
+        </div>
+
+        <div class="main-layout">
+            <div class="chat-area">
+                <div class="messages-container" id="messagesContainer">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>👋 Welcome to ChemAssistant Pro!</strong><br><br>
+                            I can help you with:<br>
+                            • 🔬 3D molecule visualization with symmetry elements<br>
+                            • 🔄 Rotation axes, mirror planes, inversion centers<br>
+                            • 🎤 Voice commands<br>
+                            • ⚖️ Equation balancing<br><br>
+                            <strong>Try:</strong> "Show symmetry of benzene" or "Visualize water"
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <div class="formula-bar">
+                        <input type="text" id="userInput" class="formula-input" placeholder="Ask about molecules, symmetry, or chemistry...">
+                        <button class="send-button" onclick="sendMessage()">Send 📤</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('viewer')">🔬 3D Viewer</button>
+                    <button class="tab" onclick="switchTab('library')">📚 Library</button>
+                    <button class="tab" onclick="switchTab('tools')">⚙️ Tools</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Viewer Tab -->
+                    <div id="tab-viewer" class="tab-pane active">
+                        <div class="search-container">
+                            <input type="text" id="moleculeSearch" class="search-input" 
+                                   placeholder="Search molecule (water, benzene, methane...)"
+                                   oninput="showSearchSuggestions(this.value)">
+                            <div id="searchSuggestions" class="search-suggestions"></div>
+                        </div>
+                        
+                        <div class="molecule-viewer-container">
+                            <canvas id="moleculeViewer"></canvas>
+                            <div class="viewer-controls-panel">
+                                <div>
+                                    <button class="viewer-btn" onclick="resetView()">🔄 Reset</button>
+                                    <button class="viewer-btn" onclick="toggleRotation()">⏸️ Rotate</button>
+                                    <button class="viewer-btn" onclick="toggleSymmetry('axes')" id="btnAxes">🔴 Axes</button>
+                                    <button class="viewer-btn" onclick="toggleSymmetry('planes')" id="btnPlanes">🟢 Planes</button>
+                                    <button class="viewer-btn" onclick="toggleSymmetry('center')" id="btnCenter">⚫ Center</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="symmetryInfo" class="symmetry-panel" style="display: none;">
+                            <strong>🔍 Symmetry Elements:</strong>
+                            <div id="symmetryBadges"></div>
+                            <div id="pointGroup" style="margin-top: 8px; font-size: 12px;"></div>
+                        </div>
+                        <div id="moleculeInfo" class="info-panel" style="display: none;"></div>
+                        <div id="viewerStatus" style="font-size: 11px; margin-top: 8px; color: #666;"></div>
+                    </div>
+
+                    <!-- Library Tab -->
+                    <div id="tab-library" class="tab-pane">
+                        <h4 style="margin-bottom: 12px;">📚 Molecule Library</h4>
+                        <div class="molecule-grid" id="moleculeGrid"></div>
+                        
+                        <h4 style="margin: 15px 0 10px;">📖 Symmetry Guide</h4>
+                        <div class="info-panel">
+                            <strong>Point Groups:</strong><br>
+                            • <strong>C₂v</strong> - Water, sulfur dioxide<br>
+                            • <strong>D₆h</strong> - Benzene<br>
+                            • <strong>Td</strong> - Methane<br>
+                            • <strong>C₃v</strong> - Ammonia<br>
+                            • <strong>D∞h</strong> - CO₂<br>
+                            • <strong>D₃d</strong> - Ethane (staggered)<br>
+                            • <strong>D₄h</strong> - XeF₄<br>
+                            • <strong>D₅d</strong> - Ferrocene
+                        </div>
+                    </div>
+
+                    <!-- Tools Tab -->
+                    <div id="tab-tools" class="tab-pane">
+                        <h4 style="margin-bottom: 12px;">⚖️ Molar Mass Calculator</h4>
+                        <input type="text" id="formulaCalc" class="calc-input" placeholder="Formula (e.g., C6H12O6, H2O)">
+                        <button class="calc-button" onclick="calculateMolarMass()">Calculate</button>
+                        <div id="molarMassResult" class="result" style="display:none;"></div>
+                        
+                        <h4 style="margin: 20px 0 12px;">⚖️ Equation Balancer</h4>
+                        <input type="text" id="equationInput" class="calc-input" placeholder="Equation (e.g., H2 + O2 -> H2O)">
+                        <button class="calc-button" onclick="balanceEquation()">Balance</button>
+                        <div id="balanceResult" class="result" style="display:none;"></div>
+                        
+                        <h4 style="margin: 20px 0 12px;">🔍 Quick Info</h4>
+                        <div class="info-panel">
+                            <strong>Common Molecules:</strong><br>
+                            • Water: H₂O, bent geometry, C₂v symmetry<br>
+                            • Benzene: C₆H₆, planar ring, D₆h symmetry<br>
+                            • Methane: CH₄, tetrahedral, Td symmetry<br>
+                            • Ammonia: NH₃, trigonal pyramidal, C₃v symmetry
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="voiceFeedback" class="voice-feedback">
+        <span>🎤</span>
+        <span id="voiceFeedbackText">Listening...</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ========== TAB MANAGEMENT ==========
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // ========== 3D VIEWER SETUP ==========
+        let scene, camera, renderer, moleculeGroup, symmetryGroup;
+        let isAutoRotating = true;
+        let symmetryVisibility = { axes: true, planes: true, center: true, improper: true };
+        
+        function init3DViewer() {
+            const canvas = document.getElementById('moleculeViewer');
+            const container = document.querySelector('.molecule-viewer-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.FogExp2(0x1a1a2e, 0.008);
+            
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(4, 3, 5);
+            camera.lookAt(0, 0, 0);
+            
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404060);
+            scene.add(ambientLight);
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+            mainLight.position.set(2, 5, 3);
+            scene.add(mainLight);
+            const fillLight = new THREE.PointLight(0x4466cc, 0.3);
+            fillLight.position.set(-2, 1, 2);
+            scene.add(fillLight);
+            
+            // Starfield
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 800;
+            const starPositions = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount; i++) {
+                starPositions[i*3] = (Math.random() - 0.5) * 200;
+                starPositions[i*3+1] = (Math.random() - 0.5) * 100;
+                starPositions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+            }
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08 })));
+            
+            const gridHelper = new THREE.GridHelper(10, 20, 0x88aaff, 0x335588);
+            gridHelper.position.y = -1.8;
+            scene.add(gridHelper);
+            
+            moleculeGroup = new THREE.Group();
+            symmetryGroup = new THREE.Group();
+            scene.add(moleculeGroup);
+            scene.add(symmetryGroup);
+            
+            setupOrbitControls();
+            animate();
+        }
+        
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraRotation = { x: 0.3, y: 0.8 };
+        let cameraZoom = 5;
+        
+        function setupOrbitControls() {
+            const canvas = document.getElementById('moleculeViewer');
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    canvas.style.cursor = 'grabbing';
+                }
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    cameraRotation.y += (e.clientX - previousMousePosition.x) * 0.01;
+                    cameraRotation.x += (e.clientY - previousMousePosition.y) * 0.01;
+                    cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                    updateCameraPosition();
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    isAutoRotating = false;
+                }
+            });
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                canvas.style.cursor = 'grab';
+            });
+            canvas.addEventListener('wheel', (e) => {
+                cameraZoom -= e.deltaY * 0.005;
+                cameraZoom = Math.max(2, Math.min(10, cameraZoom));
+                updateCameraPosition();
+                isAutoRotating = false;
+                e.preventDefault();
+            });
+            canvas.style.cursor = 'grab';
+        }
+        
+        function updateCameraPosition() {
+            const x = Math.sin(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraZoom;
+            const y = Math.sin(cameraRotation.x) * cameraZoom;
+            const z = Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraZoom;
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        function resetView() {
+            cameraRotation = { x: 0.3, y: 0.8 };
+            cameraZoom = 5;
+            updateCameraPosition();
+            document.getElementById('viewerStatus').innerHTML = '✅ View reset';
+            setTimeout(() => document.getElementById('viewerStatus').innerHTML = '', 1500);
+        }
+        
+        function toggleRotation() {
+            isAutoRotating = !isAutoRotating;
+            event.target.textContent = isAutoRotating ? '⏸️ Rotate' : '▶️ Rotate';
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isAutoRotating && !isDragging) {
+                cameraRotation.y += 0.005;
+                updateCameraPosition();
+            }
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+        
+        // ========== SYMMETRY DATABASE ==========
+        const moleculeSymmetry = {
+            water: { name: "Water", formula: "H₂O", pointGroup: "C₂v", 
+                symmetryElements: [
+                    { type: "axis", order: 2, direction: [0, 1, 0], description: "C₂ rotation axis" },
+                    { type: "plane", orientation: "vertical", normal: [1, 0, 0], description: "σᵥ mirror plane" }
+                ],
+                description: "Bent molecule with C₂v symmetry" },
+            benzene: { name: "Benzene", formula: "C₆H₆", pointGroup: "D₆h",
+                symmetryElements: [
+                    { type: "axis", order: 6, direction: [0, 1, 0], description: "C₆ principal axis" },
+                    { type: "axis", order: 2, direction: [1, 0, 0], description: "C₂ axes" },
+                    { type: "plane", orientation: "horizontal", normal: [0, 1, 0], description: "σₕ mirror plane" },
+                    { type: "center", position: [0, 0, 0], description: "Inversion center" }
+                ],
+                description: "Aromatic ring with D₆h symmetry" },
+            methane: { name: "Methane", formula: "CH₄", pointGroup: "Td",
+                symmetryElements: [
+                    { type: "axis", order: 3, direction: [1, 1, 1], description: "C₃ axes" },
+                    { type: "axis", order: 2, direction: [1, 0, 0], description: "C₂ axes" }
+                ],
+                description: "Tetrahedral molecule with Td symmetry" },
+            ammonia: { name: "Ammonia", formula: "NH₃", pointGroup: "C₃v",
+                symmetryElements: [
+                    { type: "axis", order: 3, direction: [0, 1, 0], description: "C₃ axis" }
+                ],
+                description: "Trigonal pyramidal with C₃v symmetry" }
+        };
+        
+        function createSymmetryElement(element, position, direction, order = null) {
+            const group = new THREE.Group();
+            if (element === 'axis') {
+                const length = 2.2;
+                const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, length, 6), 
+                    new THREE.MeshStandardMaterial({ color: 0xff6666 }));
+                group.add(cylinder);
+                if (order && order > 1) {
+                    const radius = 1.0;
+                    const points = [];
+                    for (let i = 0; i <= order; i++) {
+                        const angle = (i / order) * Math.PI * 2;
+                        points.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
+                    }
+                    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), 
+                        new THREE.LineBasicMaterial({ color: 0xff8888 })));
+                }
+                if (direction[0] !== 0 || direction[1] !== 1 || direction[2] !== 0) {
+                    const quat = new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(direction[0], direction[1], direction[2]).normalize());
+                    group.quaternion.copy(quat);
+                }
+            } else if (element === 'plane') {
+                const planeMat = new THREE.MeshPhongMaterial({ color: 0x66ff66, side: THREE.DoubleSide, transparent: true, opacity: 0.25 });
+                const planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 2.5), planeMat);
+                if (direction) {
+                    const normal = new THREE.Vector3(direction[0], direction[1], direction[2]).normalize();
+                    const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+                    planeMesh.quaternion.copy(quat);
+                }
+                group.add(planeMesh);
+            } else if (element === 'center') {
+                const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), 
+                    new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 }));
+                group.add(sphere);
+            }
+            group.position.set(position[0], position[1], position[2]);
+            return group;
+        }
+        
+        function visualizeSymmetry(moleculeName) {
+            const symData = moleculeSymmetry[moleculeName];
+            if (!symData) return;
+            
+            while (symmetryGroup.children.length) symmetryGroup.remove(symmetryGroup.children[0]);
+            
+            symData.symmetryElements.forEach(element => {
+                let shouldShow = false;
+                if (element.type === 'axis' && symmetryVisibility.axes) shouldShow = true;
+                else if (element.type === 'plane' && symmetryVisibility.planes) shouldShow = true;
+                else if (element.type === 'center' && symmetryVisibility.center) shouldShow = true;
+                
+                if (shouldShow) {
+                    const symElem = createSymmetryElement(element.type, element.position || [0, 0, 0], 
+                        element.direction || [0, 1, 0], element.order);
+                    if (symElem) symmetryGroup.add(symElem);
+                }
+            });
+            
+            document.getElementById('symmetryInfo').style.display = 'block';
+            document.getElementById('pointGroup').innerHTML = `<strong>Point Group:</strong> ${symData.pointGroup}<br>${symData.description}`;
+            
+            const badgesDiv = document.getElementById('symmetryBadges');
+            badgesDiv.innerHTML = '';
+            symData.symmetryElements.forEach(e => {
+                const badge = document.createElement('span');
+                badge.className = 'symmetry-badge';
+                badge.innerHTML = `${e.type === 'axis' ? '🔄' : e.type === 'plane' ? '🔲' : '⚫'} ${e.description}`;
+                badge.onclick = () => highlightSymmetry();
+                badgesDiv.appendChild(badge);
+            });
+        }
+        
+        function highlightSymmetry() {
+            symmetryGroup.children.forEach(child => {
+                if (child.isMesh && child.material) {
+                    const origColor = child.material.color.getHex();
+                    child.material.color.setHex(0xffffff);
+                    setTimeout(() => child.material.color.setHex(origColor), 300);
+                }
+            });
+        }
+        
+        function toggleSymmetry(type) {
+            const btn = document.getElementById(`btn${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            symmetryVisibility[type] = !symmetryVisibility[type];
+            btn.classList.toggle('active', symmetryVisibility[type]);
+            const currentMolecule = document.getElementById('moleculeSearch').value.toLowerCase();
+            if (moleculeSymmetry[currentMolecule]) visualizeSymmetry(currentMolecule);
+        }
+        
+        // ========== MOLECULE STRUCTURES ==========
+        function getMoleculeStructure(name) {
+            const structures = {
+                water: { name: "Water", formula: "H₂O", atoms: [
+                    { element: 'O', x: 0, y: 0, z: 0, radius: 0.5, color: 0xff6666 },
+                    { element: 'H', x: 0.8, y: 0.6, z: 0, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: 0.8, y: -0.6, z: 0, radius: 0.3, color: 0xcccccc }
+                ], bonds: [{ from: 0, to: 1 }, { from: 0, to: 2 }] },
+                methane: { name: "Methane", formula: "CH₄", atoms: [
+                    { element: 'C', x: 0, y: 0, z: 0, radius: 0.5, color: 0x888888 },
+                    { element: 'H', x: 0.8, y: 0.8, z: 0.8, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: 0.8, y: -0.8, z: -0.8, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: -0.8, y: 0.8, z: -0.8, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: -0.8, y: -0.8, z: 0.8, radius: 0.3, color: 0xcccccc }
+                ], bonds: [{ from: 0, to: 1 }, { from: 0, to: 2 }, { from: 0, to: 3 }, { from: 0, to: 4 }] },
+                ammonia: { name: "Ammonia", formula: "NH₃", atoms: [
+                    { element: 'N', x: 0, y: 0, z: 0, radius: 0.5, color: 0x44aaff },
+                    { element: 'H', x: 0.8, y: 0.8, z: 0, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: 0.8, y: -0.4, z: 0.7, radius: 0.3, color: 0xcccccc },
+                    { element: 'H', x: 0.8, y: -0.4, z: -0.7, radius: 0.3, color: 0xcccccc }
+                ], bonds: [{ from: 0, to: 1 }, { from: 0, to: 2 }, { from: 0, to: 3 }] }
+            };
+            
+            if (name === 'benzene') {
+                const atoms = [], bonds = [];
+                const radius = 1.2;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60) * Math.PI / 180;
+                    const x = Math.cos(angle) * radius;
+                    const z = Math.sin(angle) * radius;
+                    atoms.push({ element: 'C', x, y: 0, z, radius: 0.4, color: 0x888888 });
+                    atoms.push({ element: 'H', x: x * 1.6, y: 0, z: z * 1.6, radius: 0.28, color: 0xcccccc });
+                    bonds.push({ from: i*2, to: i*2 + 1 });
+                }
+                for (let i = 0; i < 6; i++) bonds.push({ from: i*2, to: ((i+1)%6)*2 });
+                return { name: "Benzene", formula: "C₆H₆", atoms, bonds };
+            }
+            return structures[name];
+        }
+        
+        function visualizeMolecule(moleculeName) {
+            const name = moleculeName.toLowerCase();
+            const structure = getMoleculeStructure(name);
+            
+            while (moleculeGroup.children.length) moleculeGroup.remove(moleculeGroup.children[0]);
+            
+            if (structure && structure.atoms) {
+                structure.atoms.forEach(atom => {
+                    const sphere = new THREE.Mesh(new THREE.SphereGeometry(atom.radius, 48, 48),
+                        new THREE.MeshStandardMaterial({ color: atom.color, roughness: 0.3 }));
+                    sphere.position.set(atom.x, atom.y, atom.z);
+                    moleculeGroup.add(sphere);
+                });
+                if (structure.bonds) {
+                    structure.bonds.forEach(bond => {
+                        const from = structure.atoms[bond.from];
+                        const to = structure.atoms[bond.to];
+                        if (from && to) {
+                            const points = [new THREE.Vector3(from.x, from.y, from.z), new THREE.Vector3(to.x, to.y, to.z)];
+                            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), 
+                                new THREE.LineBasicMaterial({ color: 0xccccaa }));
+                            moleculeGroup.add(line);
+                        }
+                    });
+                }
+                document.getElementById('moleculeInfo').style.display = 'block';
+                document.getElementById('moleculeInfo').innerHTML = `<strong>🧪 ${structure.name}</strong><br>Formula: ${structure.formula}`;
+                
+                if (moleculeSymmetry[name]) visualizeSymmetry(name);
+                document.getElementById('viewerStatus').innerHTML = `✅ ${structure.name} loaded`;
+                setTimeout(() => document.getElementById('viewerStatus').innerHTML = '', 2000);
+            }
+        }
+        
+        // ========== SEARCH ==========
+        const moleculeList = ['water', 'benzene', 'methane', 'ammonia'];
+        
+        function showSearchSuggestions(query) {
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            if (!query.trim()) { suggestionsDiv.style.display = 'none'; return; }
+            const matches = moleculeList.filter(m => m.includes(query.toLowerCase())).slice(0, 5);
+            if (matches.length) {
+                suggestionsDiv.style.display = 'block';
+                suggestionsDiv.innerHTML = matches.map(m => 
+                    `<div class="search-suggestion-item" onclick="selectMolecule('${m}')">🔬 ${m.charAt(0).toUpperCase() + m.slice(1)}</div>`).join('');
+            } else suggestionsDiv.style.display = 'none';
+        }
+        
+        function selectMolecule(molecule) {
+            document.getElementById('moleculeSearch').value = molecule;
+            document.getElementById('searchSuggestions').style.display = 'none';
+            visualizeMolecule(molecule);
+        }
+        
+        // ========== MOLECULE GRID ==========
+        function buildMoleculeGrid() {
+            const molecules = [
+                { name: 'Water', icon: '💧', pointGroup: 'C₂v' },
+                { name: 'Benzene', icon: '🔄', pointGroup: 'D₆h' },
+                { name: 'Methane', icon: '🔥', pointGroup: 'Td' },
+                { name: 'Ammonia', icon: '🧪', pointGroup: 'C₃v' }
+            ];
+            const grid = document.getElementById('moleculeGrid');
+            grid.innerHTML = molecules.map(m => `
+                <div class="molecule-card" onclick="selectMolecule('${m.name.toLowerCase()}')">
+                    <div class="icon">${m.icon}</div>
+                    <div class="name">${m.name}</div>
+                    <div class="point-group">${m.pointGroup}</div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== CALCULATIONS ==========
+        const atomicMasses = { H: 1.008, C: 12.011, O: 15.999, N: 14.007, Cl: 35.45, Na: 22.99 };
+        
+        function calculateMolarMass() {
+            const formula = document.getElementById('formulaCalc').value;
+            let total = 0;
+            let i = 0;
+            while (i < formula.length) {
+                let element = formula[i];
+                if (i + 1 < formula.length && /[a-z]/.test(formula[i+1])) { element += formula[i+1]; i += 2; }
+                else i++;
+                let count = '';
+                while (i < formula.length && /\d/.test(formula[i])) { count += formula[i]; i++; }
+                const num = count === '' ? 1 : parseInt(count);
+                if (atomicMasses[element]) total += atomicMasses[element] * num;
+                else { document.getElementById('molarMassResult').innerHTML = `❌ Unknown element: ${element}`; return; }
+            }
+            const resultDiv = document.getElementById('molarMassResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `📊 Molar Mass: ${total.toFixed(4)} g/mol`;
+        }
+        
+        function balanceEquation() {
+            const eq = document.getElementById('equationInput').value;
+            const balanced = { 'h2+o2->h2o': '2H₂ + O₂ → 2H₂O', 'ch4+o2->co2+h2o': 'CH₄ + 2O₂ → CO₂ + 2H₂O' };
+            const key = eq.toLowerCase().replace(/\s/g, '');
+            const resultDiv = document.getElementById('balanceResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = balanced[key] ? `✅ ${balanced[key]}` : 'Try: H2 + O2 -> H2O';
+        }
+        
+        // ========== VOICE INPUT ==========
+        let recognition = null, isRecording = false;
+        
+        function initVoiceInput() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.onresult = (e) => {
+                    const text = e.results[0][0].transcript;
+                    document.getElementById('userInput').value = text;
+                    sendMessage();
+                    stopVoiceInput();
+                };
+                recognition.onend = () => stopVoiceInput();
+            }
+        }
+        
+        function toggleVoiceInput() {
+            if (!recognition) initVoiceInput();
+            if (isRecording) stopVoiceInput();
+            else {
+                recognition.start();
+                isRecording = true;
+                document.getElementById('voiceBtn').classList.add('recording');
+                document.getElementById('voiceBtn').innerHTML = '🔴 Recording...';
+                document.getElementById('voiceFeedback').style.display = 'flex';
+                document.getElementById('voiceFeedbackText').innerHTML = 'Listening...';
+            }
+        }
+        
+        function stopVoiceInput() {
+            isRecording = false;
+            document.getElementById('voiceBtn').classList.remove('recording');
+            document.getElementById('voiceBtn').innerHTML = '🎤 Voice Input';
+            document.getElementById('voiceFeedback').style.display = 'none';
+        }
+        
+        // ========== CHAT ==========
+        let safeMode = true;
+        
+        function toggleMode() {
+            safeMode = document.getElementById('safeModeToggle').checked;
+            document.getElementById('modeLabel').innerHTML = safeMode ? '🔒 Safe' : '🔬 Expert';
+            document.getElementById('modeBadge').textContent = safeMode ? 'Edu' : 'Exp';
+            document.getElementById('modeBadge').className = safeMode ? 'mode-badge mode-safe' : 'mode-badge mode-expert';
+        }
+        
+        function showModeInfo() {
+            addMessage('bot', `**Mode: ${safeMode ? 'Educational Safe' : 'Expert Research'}**\n\nSafe Mode: Educational content only\nExpert Mode: Advanced features with safety warnings`);
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+            addMessage('user', message);
+            input.value = '';
+            showTypingIndicator();
+            setTimeout(() => {
+                removeTypingIndicator();
+                processQuery(message);
+            }, 300);
+        }
+        
+        function processQuery(query) {
+            const lower = query.toLowerCase();
+            if (lower.includes('symmetry') || lower.includes('point group')) {
+                for (let m of moleculeList) {
+                    if (lower.includes(m)) {
+                        visualizeMolecule(m);
+                        addMessage('bot', `🔬 Showing ${m} with symmetry elements. Check the 3D viewer!`);
+                        return;
+                    }
+                }
+                addMessage('bot', `I can show symmetry for: water, benzene, methane, ammonia. Try "Show symmetry of benzene"`);
+            } else if (lower.includes('show') && (lower.includes('3d') || lower.includes('visualize'))) {
+                for (let m of moleculeList) {
+                    if (lower.includes(m)) {
+                        visualizeMolecule(m);
+                        addMessage('bot', `🔬 Visualizing ${m} in 3D with symmetry elements.`);
+                        return;
+                    }
+                }
+                addMessage('bot', `Try: "Show benzene" or "Visualize water"`);
+            } else {
+                addMessage('bot', `I can help with:\n• **3D Visualization**: "Show benzene"\n• **Symmetry**: "Symmetry of water"\n• **Calculations**: Use the Tools tab\n• **Voice**: Click the microphone!\n\nTry typing a molecule name like "methane"!`);
+            }
+        }
+        
+        function addMessage(type, content) {
+            const container = document.getElementById('messagesContainer');
+            const div = document.createElement('div');
+            div.className = `message ${type}-message`;
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `<div class="message-content">${content.replace(/\n/g, '<br>')}</div><div class="message-time">${time}</div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            const container = document.getElementById('messagesContainer');
+            const div = document.createElement('div');
+            div.id = 'typingIndicator';
+            div.className = 'message bot-message';
+            div.innerHTML = `<div class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+        
+        function showEmergencyInfo() {
+            addMessage('bot', `🚨 **Emergency Contacts**\nPoison Control: 1-800-222-1222\nCHEMTREC: 1-800-424-9300\n\n**First Aid:** Flush with water for 15 minutes, seek medical attention.`);
+        }
+        
+        // Initialize
+        window.onload = () => {
+            init3DViewer();
+            buildMoleculeGrid();
+            initVoiceInput();
+            document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+            document.addEventListener('click', (e) => { if (!e.target.closest('.search-container')) document.getElementById('searchSuggestions').style.display = 'none'; });
+            visualizeMolecule('benzene');
+        };
+    </script>
+</body>
+</html>
