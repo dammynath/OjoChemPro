@@ -1,5 +1,5 @@
 """
-ChemAssistant Pro - Advanced 3D Chemistry Lab with Symmetry Analysis
+Ojo Chem Pro - Advanced 3D Chemistry Lab with Symmetry Analysis
 Streamlit Deployment Version
 """
 
@@ -16,7 +16,7 @@ from datetime import datetime
 
 # Page configuration
 st.set_page_config(
-    page_title="ChemAssistant Pro",
+    page_title="Ojo Chem Pro",
     page_icon="🧪",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -437,7 +437,7 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1 style="color: white; margin: 0;">🧪 ChemAssistant Pro</h1>
+        <h1 style="color: white; margin: 0;">🧪 Ojo Chem Pro</h1>
         <p style="color: white; margin: 0; opacity: 0.9;">Advanced 3D Chemistry Lab with Symmetry Analysis</p>
     </div>
     """, unsafe_allow_html=True)
@@ -481,7 +481,7 @@ def main():
         # Mode info
         st.markdown("### ℹ️ About")
         st.info("""
-        **ChemAssistant Pro** helps you explore:
+        **Ojo Chem Pro** helps you explore:
         - 3D molecular structures
         - Symmetry elements and point groups
         - Chemical calculations
@@ -669,7 +669,7 @@ def main():
         # Initialize chat history
         if "messages" not in st.session_state:
             st.session_state.messages = [
-                {"role": "assistant", "content": "👋 Hello! I'm ChemAssistant Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
+                {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
             ]
         
         # Display chat history
