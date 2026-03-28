@@ -33,26 +33,34 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
+    .chat-container {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
     .chat-message {
         padding: 0.75rem;
         border-radius: 10px;
         margin-bottom: 0.5rem;
         display: inline-block;
         max-width: 80%;
+        clear: both;
     }
     
     .user-message {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         float: right;
-        clear: both;
     }
     
     .bot-message {
         background: #f0f2f6;
         color: #1e1e2f;
         float: left;
-        clear: both;
         border: 1px solid #e0e0e0;
     }
     
@@ -108,6 +116,16 @@ st.markdown("""
     
     div[data-testid="stVerticalBlock"] > div {
         gap: 0.5rem;
+    }
+    
+    /* Chat input styling */
+    .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 1rem 0;
+        border-top: 1px solid #e0e0e0;
+        margin-top: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -395,7 +413,6 @@ def get_chatbot_response(query, safe_mode=True):
     # Molar mass calculation
     if "molar mass" in query_lower or "molecular weight" in query_lower:
         # Extract formula
-        import re
         formula_match = re.search(r'([A-Z][a-z]?\d*)+', query)
         if formula_match:
             formula = formula_match.group()
@@ -662,26 +679,50 @@ def main():
                         else:
                             st.warning("Compound not found. Try a different name or check spelling.")
     
-    # Tab 4: Chemistry Chat
+    # Tab 4: Chemistry Chat - FIXED: Moved chat_input outside of any container
     with tab4:
         st.markdown("#### 💬 Chemistry Assistant")
         
-        # Initialize chat history
+        # Initialize chat history in session state if not exists
         if "messages" not in st.session_state:
             st.session_state.messages = [
                 {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
             ]
         
-        # Display chat history
-        for message in st.session_state.messages:
-            if message["role"] == "user":
-                st.markdown(f'<div class="chat-message user-message" style="float: right;">{message["content"]}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="chat-message bot-message" style="float: left;">{message["content"]}</div>', unsafe_allow_html=True)
-            st.markdown("<br clear='both'>", unsafe_allow_html=True)
+        # Create a container for chat messages with fixed height and scrolling
+        chat_container = st.container()
         
-        # Chat input
-        user_query = st.chat_input("Ask me about chemistry...")
+        # Display chat history in the container
+        with chat_container:
+            for message in st.session_state.messages:
+                if message["role"] == "user":
+                    st.markdown(f'<div class="chat-message user-message" style="float: right; margin-left: auto;">{message["content"]}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="chat-message bot-message" style="float: left;">{message["content"]}</div>', unsafe_allow_html=True)
+                st.markdown("<br clear='both'>", unsafe_allow_html=True)
+        
+        # Quick suggestions row
+        st.markdown("#### Quick Suggestions")
+        cols = st.columns(4)
+        suggestions = [
+            "Show me benzene",
+            "Symmetry of water",
+            "Balance: H2 + O2 -> H2O",
+            "Molar mass of glucose"
+        ]
+        
+        for i, suggestion in enumerate(suggestions):
+            with cols[i]:
+                if st.button(suggestion, key=f"sugg_{i}"):
+                    # Add user message
+                    st.session_state.messages.append({"role": "user", "content": suggestion})
+                    # Get and add response
+                    response = get_chatbot_response(suggestion, safe_mode)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    st.rerun()
+        
+        # Chat input - Now placed outside of any container and at the bottom
+        user_query = st.chat_input("Ask me about chemistry...", key="chat_input_main")
         
         if user_query:
             # Add user message
@@ -696,24 +737,6 @@ def main():
             
             # Rerun to display new messages
             st.rerun()
-        
-        # Quick suggestions
-        st.markdown("#### Quick Suggestions")
-        cols = st.columns(4)
-        suggestions = [
-            "Show me benzene",
-            "Symmetry of water",
-            "Balance: H2 + O2 -> H2O",
-            "Molar mass of glucose"
-        ]
-        
-        for i, suggestion in enumerate(suggestions):
-            with cols[i]:
-                if st.button(suggestion, key=f"sugg_{i}"):
-                    st.session_state.messages.append({"role": "user", "content": suggestion})
-                    response = get_chatbot_response(suggestion, safe_mode)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                    st.rerun()
 
 if __name__ == "__main__":
     main()
