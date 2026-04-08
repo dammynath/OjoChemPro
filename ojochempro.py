@@ -1,6 +1,6 @@
 """
 Ojo Chem Pro - Advanced 3D Chemistry Lab with Symmetry Analysis
-Streamlit Deployment Version - Fixed for st.chat_input() compatibility
+Streamlit Deployment Version - With Mass to Mole Converter
 """
 
 import streamlit as st
@@ -55,15 +55,20 @@ st.markdown("""
         border: 1px solid #e0e0e0;
     }
     
-    .symmetry-badge {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        margin: 0.2rem;
+    .converter-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem;
+        border-radius: 10px;
         color: white;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        cursor: pointer;
+        margin-bottom: 1rem;
+    }
+    
+    .result-card {
+        background: #e8f4f8;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        border-left: 4px solid #667eea;
     }
     
     .molecule-card {
@@ -104,23 +109,129 @@ st.markdown("""
         margin-bottom: 1rem;
         border: 1px solid #e0e0e0;
     }
-    
-    /* Clear fix */
-    .clearfix::after {
-        content: "";
-        clear: both;
-        display: table;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# ========== CHEMICAL DATABASE ==========
-ATOMIC_MASSES = {
-    'H': 1.008, 'He': 4.0026, 'Li': 6.94, 'Be': 9.0122, 'B': 10.81, 'C': 12.011,
-    'N': 14.007, 'O': 15.999, 'F': 18.998, 'Ne': 20.18, 'Na': 22.99, 'Mg': 24.305,
-    'Al': 26.982, 'Si': 28.086, 'P': 30.974, 'S': 32.06, 'Cl': 35.45, 'K': 39.098,
-    'Ca': 40.078, 'Fe': 55.845, 'Cu': 63.546, 'Zn': 65.38, 'Ag': 107.87, 'I': 126.90
+# ========== COMPREHENSIVE PERIODIC TABLE DATABASE ==========
+PERIODIC_TABLE = {
+    # Element: [symbol, name, atomic_mass]
+    "H": ["H", "Hydrogen", 1.008],
+    "He": ["He", "Helium", 4.0026],
+    "Li": ["Li", "Lithium", 6.94],
+    "Be": ["Be", "Beryllium", 9.0122],
+    "B": ["B", "Boron", 10.81],
+    "C": ["C", "Carbon", 12.011],
+    "N": ["N", "Nitrogen", 14.007],
+    "O": ["O", "Oxygen", 15.999],
+    "F": ["F", "Fluorine", 18.998],
+    "Ne": ["Ne", "Neon", 20.18],
+    "Na": ["Na", "Sodium", 22.99],
+    "Mg": ["Mg", "Magnesium", 24.305],
+    "Al": ["Al", "Aluminum", 26.982],
+    "Si": ["Si", "Silicon", 28.086],
+    "P": ["P", "Phosphorus", 30.974],
+    "S": ["S", "Sulfur", 32.06],
+    "Cl": ["Cl", "Chlorine", 35.45],
+    "Ar": ["Ar", "Argon", 39.95],
+    "K": ["K", "Potassium", 39.098],
+    "Ca": ["Ca", "Calcium", 40.078],
+    "Sc": ["Sc", "Scandium", 44.956],
+    "Ti": ["Ti", "Titanium", 47.867],
+    "V": ["V", "Vanadium", 50.942],
+    "Cr": ["Cr", "Chromium", 51.996],
+    "Mn": ["Mn", "Manganese", 54.938],
+    "Fe": ["Fe", "Iron", 55.845],
+    "Co": ["Co", "Cobalt", 58.933],
+    "Ni": ["Ni", "Nickel", 58.693],
+    "Cu": ["Cu", "Copper", 63.546],
+    "Zn": ["Zn", "Zinc", 65.38],
+    "Ga": ["Ga", "Gallium", 69.723],
+    "Ge": ["Ge", "Germanium", 72.63],
+    "As": ["As", "Arsenic", 74.922],
+    "Se": ["Se", "Selenium", 78.96],
+    "Br": ["Br", "Bromine", 79.904],
+    "Kr": ["Kr", "Krypton", 83.798],
+    "Rb": ["Rb", "Rubidium", 85.468],
+    "Sr": ["Sr", "Strontium", 87.62],
+    "Y": ["Y", "Yttrium", 88.906],
+    "Zr": ["Zr", "Zirconium", 91.224],
+    "Nb": ["Nb", "Niobium", 92.906],
+    "Mo": ["Mo", "Molybdenum", 95.95],
+    "Tc": ["Tc", "Technetium", 98],
+    "Ru": ["Ru", "Ruthenium", 101.07],
+    "Rh": ["Rh", "Rhodium", 102.91],
+    "Pd": ["Pd", "Palladium", 106.42],
+    "Ag": ["Ag", "Silver", 107.87],
+    "Cd": ["Cd", "Cadmium", 112.41],
+    "In": ["In", "Indium", 114.82],
+    "Sn": ["Sn", "Tin", 118.71],
+    "Sb": ["Sb", "Antimony", 121.76],
+    "Te": ["Te", "Tellurium", 127.6],
+    "I": ["I", "Iodine", 126.90],
+    "Xe": ["Xe", "Xenon", 131.29],
+    "Cs": ["Cs", "Cesium", 132.91],
+    "Ba": ["Ba", "Barium", 137.33],
+    "La": ["La", "Lanthanum", 138.91],
+    "Ce": ["Ce", "Cerium", 140.12],
+    "Pr": ["Pr", "Praseodymium", 140.91],
+    "Nd": ["Nd", "Neodymium", 144.24],
+    "Pm": ["Pm", "Promethium", 145],
+    "Sm": ["Sm", "Samarium", 150.36],
+    "Eu": ["Eu", "Europium", 151.96],
+    "Gd": ["Gd", "Gadolinium", 157.25],
+    "Tb": ["Tb", "Terbium", 158.93],
+    "Dy": ["Dy", "Dysprosium", 162.5],
+    "Ho": ["Ho", "Holmium", 164.93],
+    "Er": ["Er", "Erbium", 167.26],
+    "Tm": ["Tm", "Thulium", 168.93],
+    "Yb": ["Yb", "Ytterbium", 173.05],
+    "Lu": ["Lu", "Lutetium", 174.97],
+    "Hf": ["Hf", "Hafnium", 178.49],
+    "Ta": ["Ta", "Tantalum", 180.95],
+    "W": ["W", "Tungsten", 183.84],
+    "Re": ["Re", "Rhenium", 186.21],
+    "Os": ["Os", "Osmium", 190.23],
+    "Ir": ["Ir", "Iridium", 192.22],
+    "Pt": ["Pt", "Platinum", 195.08],
+    "Au": ["Au", "Gold", 196.97],
+    "Hg": ["Hg", "Mercury", 200.59],
+    "Tl": ["Tl", "Thallium", 204.38],
+    "Pb": ["Pb", "Lead", 207.2],
+    "Bi": ["Bi", "Bismuth", 208.98],
+    "Th": ["Th", "Thorium", 232.04],
+    "Pa": ["Pa", "Protactinium", 231.04],
+    "U": ["U", "Uranium", 238.03],
+    "Np": ["Np", "Neptunium", 237],
+    "Pu": ["Pu", "Plutonium", 244],
+    "Am": ["Am", "Americium", 243],
+    "Cm": ["Cm", "Curium", 247],
+    "Bk": ["Bk", "Berkelium", 247],
+    "Cf": ["Cf", "Californium", 251],
+    "Es": ["Es", "Einsteinium", 252],
+    "Fm": ["Fm", "Fermium", 257],
+    "Md": ["Md", "Mendelevium", 258],
+    "No": ["No", "Nobelium", 259],
+    "Lr": ["Lr", "Lawrencium", 262]
 }
+
+# Common compounds database for quick selection
+COMMON_COMPOUNDS = {
+    "Water": {"formula": "H2O", "mass": 18.015},
+    "Carbon Dioxide": {"formula": "CO2", "mass": 44.01},
+    "Sodium Chloride": {"formula": "NaCl", "mass": 58.44},
+    "Glucose": {"formula": "C6H12O6", "mass": 180.156},
+    "Sulfuric Acid": {"formula": "H2SO4", "mass": 98.079},
+    "Ammonia": {"formula": "NH3", "mass": 17.031},
+    "Methane": {"formula": "CH4", "mass": 16.04},
+    "Ethanol": {"formula": "C2H5OH", "mass": 46.07},
+    "Aspirin": {"formula": "C9H8O4", "mass": 180.157},
+    "Caffeine": {"formula": "C8H10N4O2", "mass": 194.19},
+    "Benzene": {"formula": "C6H6", "mass": 78.11},
+    "Acetic Acid": {"formula": "CH3COOH", "mass": 60.052}
+}
+
+# Atomic masses dictionary for calculations
+ATOMIC_MASSES = {symbol: data[2] for symbol, data in PERIODIC_TABLE.items()}
 
 # Molecule symmetry database
 MOLECULE_SYMMETRY = {
@@ -234,6 +345,16 @@ def calculate_molar_mass(formula):
     except Exception as e:
         return None, str(e)
 
+def mass_to_moles(mass, molar_mass):
+    """Convert mass to moles"""
+    if molar_mass > 0:
+        return mass / molar_mass
+    return None
+
+def moles_to_mass(moles, molar_mass):
+    """Convert moles to mass"""
+    return moles * molar_mass
+
 def balance_equation(equation):
     """Balance chemical equations (simplified version)"""
     balanced_equations = {
@@ -268,6 +389,17 @@ def search_pubchem(compound):
     except:
         pass
     return None
+
+def calculate_compound_mass(elements):
+    """Calculate mass of a compound from selected elements and counts"""
+    total_mass = 0
+    composition = []
+    for element, count in elements.items():
+        if element in ATOMIC_MASSES:
+            mass = ATOMIC_MASSES[element] * count
+            total_mass += mass
+            composition.append(f"{element}{count if count > 1 else ''}: {mass:.2f} g/mol")
+    return total_mass, composition
 
 # ========== 3D MOLECULE VISUALIZATION ==========
 def create_3d_molecule(smiles, molecule_name):
@@ -422,6 +554,7 @@ def get_chatbot_response(query, safe_mode=True):
     return f"🧪 **Chemistry Assistant**\n\nI can help you with:\n\n" \
            f"• **3D Molecule Viewer** - View molecules in 3D\n" \
            f"• **Symmetry Analysis** - Visualize symmetry elements\n" \
+           f"• **Mass to Mole Converter** - Convert between mass and moles\n" \
            f"• **Equation Balancing** - Balance chemical equations\n" \
            f"• **Molar Mass Calculator** - Calculate molecular weights\n" \
            f"• **PubChem Integration** - Search chemical compounds\n\n" \
@@ -439,7 +572,7 @@ def main():
     st.markdown("""
     <div class="main-header">
         <h1 style="color: white; margin: 0;">🧪 Ojo Chem Pro</h1>
-        <p style="color: white; margin: 0; opacity: 0.9;">Advanced 3D Chemistry Lab with Symmetry Analysis</p>
+        <p style="color: white; margin: 0; opacity: 0.9;">Advanced 3D Chemistry Lab with Mass-Mole Converter</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -452,7 +585,7 @@ def main():
         **First Aid:** Flush with water for 15 minutes, seek immediate medical attention.
         """)
     
-    # Sidebar for mode and controls
+    # Sidebar for mode and mass-mole converter
     with st.sidebar:
         st.markdown("### 🎮 Controls")
         
@@ -462,6 +595,134 @@ def main():
         
         if not safe_mode:
             st.warning("⚠️ Expert Mode: Advanced content with safety warnings. Adult supervision recommended.")
+        
+        st.divider()
+        
+        # ========== MASS TO MOLE CONVERTER SECTION ==========
+        st.markdown("### ⚖️ Mass ↔ Mole Converter")
+        st.markdown("Convert between mass and moles for any compound")
+        
+        # Conversion type selection
+        conversion_type = st.radio(
+            "Select conversion type:",
+            ["Mass → Moles", "Moles → Mass"],
+            horizontal=True
+        )
+        
+        # Compound input method
+        input_method = st.radio(
+            "Select compound:",
+            ["Common Compound", "Custom Formula", "Build from Elements"],
+            horizontal=True
+        )
+        
+        molar_mass = None
+        formula_display = ""
+        
+        if input_method == "Common Compound":
+            compound_name = st.selectbox(
+                "Select compound:",
+                options=list(COMMON_COMPOUNDS.keys())
+            )
+            formula_display = COMMON_COMPOUNDS[compound_name]["formula"]
+            molar_mass = COMMON_COMPOUNDS[compound_name]["mass"]
+            st.info(f"**Formula:** {format_formula(formula_display)}")
+            st.info(f"**Molar Mass:** {molar_mass:.3f} g/mol")
+            
+        elif input_method == "Custom Formula":
+            formula_input = st.text_input(
+                "Enter chemical formula:",
+                placeholder="e.g., H2O, C6H12O6, NaCl",
+                key="converter_formula"
+            )
+            if formula_input:
+                mass_calc, elements = calculate_molar_mass(formula_input.upper())
+                if mass_calc:
+                    molar_mass = mass_calc
+                    formula_display = formula_input
+                    st.success(f"**Molar Mass:** {molar_mass:.3f} g/mol")
+                    with st.expander("Show composition"):
+                        for elem in elements:
+                            st.write(elem)
+                else:
+                    st.error(f"Error: {elements}")
+        
+        else:  # Build from Elements
+            st.markdown("#### Build your compound:")
+            
+            # Initialize session state for elements
+            if "compound_elements" not in st.session_state:
+                st.session_state.compound_elements = {}
+            
+            # Element selector
+            element_list = sorted([(symbol, data[1]) for symbol, data in PERIODIC_TABLE.items()])
+            element_options = [f"{symbol} - {name}" for symbol, name in element_list]
+            
+            selected_element = st.selectbox("Select element:", element_options)
+            selected_symbol = selected_element.split(" - ")[0]
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                element_count = st.number_input("Number of atoms:", min_value=1, max_value=100, value=1, step=1)
+            with col2:
+                if st.button("➕ Add Element", use_container_width=True):
+                    st.session_state.compound_elements[selected_symbol] = st.session_state.compound_elements.get(selected_symbol, 0) + element_count
+                    st.rerun()
+            
+            # Display current composition
+            if st.session_state.compound_elements:
+                st.markdown("**Current composition:**")
+                for element, count in st.session_state.compound_elements.items():
+                    st.markdown(f"- {element}: {count}")
+                
+                if st.button("🗑️ Clear All", use_container_width=True):
+                    st.session_state.compound_elements = {}
+                    st.rerun()
+                
+                # Calculate molar mass
+                molar_mass, composition = calculate_compound_mass(st.session_state.compound_elements)
+                formula_display = "".join([f"{elem}{count if count > 1 else ''}" for elem, count in st.session_state.compound_elements.items()])
+                st.success(f"**Formula:** {format_formula(formula_display)}")
+                st.success(f"**Molar Mass:** {molar_mass:.3f} g/mol")
+        
+        # Conversion calculator
+        if molar_mass and molar_mass > 0:
+            st.divider()
+            
+            if conversion_type == "Mass → Moles":
+                mass_input = st.number_input("Enter mass (grams):", min_value=0.0, value=1.0, step=0.1, format="%.4f")
+                
+                if mass_input > 0:
+                    moles = mass_to_moles(mass_input, molar_mass)
+                    
+                    st.markdown(f"""
+                    <div class="result-card">
+                        <strong>📊 Conversion Result:</strong><br>
+                        Mass: {mass_input:.4f} g<br>
+                        Molar Mass: {molar_mass:.4f} g/mol<br>
+                        <strong>Moles = {moles:.6f} mol</strong><br><br>
+                        Number of molecules: {moles * 6.022e23:.2e}
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info("Enter a mass greater than 0 to calculate moles.")
+                    
+            else:  # Moles → Mass
+                moles_input = st.number_input("Enter moles:", min_value=0.0, value=1.0, step=0.1, format="%.4f")
+                
+                if moles_input > 0:
+                    mass = moles_to_mass(moles_input, molar_mass)
+                    
+                    st.markdown(f"""
+                    <div class="result-card">
+                        <strong>📊 Conversion Result:</strong><br>
+                        Moles: {moles_input:.4f} mol<br>
+                        Molar Mass: {molar_mass:.4f} g/mol<br>
+                        <strong>Mass = {mass:.4f} g</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info("Enter moles greater than 0 to calculate mass.")
         
         st.divider()
         
@@ -478,20 +739,21 @@ def main():
         
         st.divider()
         
-        # Mode info
+        # About section
         st.markdown("### ℹ️ About")
         st.info("""
         **Ojo Chem Pro** helps you explore:
         - 3D molecular structures
         - Symmetry elements and point groups
+        - Mass to mole conversions
         - Chemical calculations
         - Equation balancing
         """)
         
         # Stats
-        st.divider()
         st.markdown(f"**Molecules:** {len(MOLECULE_SYMMETRY)}")
-        st.markdown(f"**Elements:** {len(ATOMIC_MASSES)}")
+        st.markdown(f"**Elements:** {len(PERIODIC_TABLE)}")
+        st.markdown(f"**Compounds:** {len(COMMON_COMPOUNDS)}")
         st.markdown(f"**Last Updated:** {datetime.now().strftime('%Y-%m-%d')}")
     
     # Create two columns: Left for main content (tabs), Right for chat
@@ -667,14 +929,14 @@ def main():
                             else:
                                 st.warning("Compound not found. Try a different name or check spelling.")
     
-    # RIGHT COLUMN - Chat interface (completely separate from tabs)
+    # RIGHT COLUMN - Chat interface
     with right_col:
         st.markdown("### 💬 Chemistry Assistant")
         
         # Initialize session state for chat if not exists
         if "chat_messages" not in st.session_state:
             st.session_state.chat_messages = [
-                {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
+                {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, mass-mole conversions, or chemistry concepts!"}
             ]
         
         # Display chat messages in a scrollable container
@@ -717,7 +979,7 @@ def main():
                 st.session_state.chat_messages.append({"role": "assistant", "content": response})
                 st.rerun()
         
-        # Chat input - at the top level of the column, NOT inside any container
+        # Chat input
         user_input = st.chat_input("Ask me about chemistry...", key="chemistry_chat_input")
         
         if user_input:
