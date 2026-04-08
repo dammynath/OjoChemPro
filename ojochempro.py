@@ -1,6 +1,6 @@
 """
 Ojo Chem Pro - Advanced 3D Chemistry Lab with Symmetry Analysis
-Streamlit Deployment Version
+Streamlit Deployment Version - Fixed for st.chat_input() compatibility
 """
 
 import streamlit as st
@@ -96,7 +96,7 @@ st.markdown("""
     
     /* Chat container styling */
     .chat-history-container {
-        height: 400px;
+        height: 450px;
         overflow-y: auto;
         padding: 1rem;
         background: #f8f9fa;
@@ -474,7 +474,6 @@ def main():
             with cols[i % 3]:
                 if st.button(f"🔬 {mol}", key=f"quick_{mol}", use_container_width=True):
                     st.session_state['selected_molecule'] = mol.lower()
-                    st.session_state['active_tab'] = "Viewer"
                     st.rerun()
         
         st.divider()
@@ -495,217 +494,230 @@ def main():
         st.markdown(f"**Elements:** {len(ATOMIC_MASSES)}")
         st.markdown(f"**Last Updated:** {datetime.now().strftime('%Y-%m-%d')}")
     
-    # Main content area with tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🔬 3D Viewer", "🔄 Symmetry Analysis", "⚙️ Tools", "💬 Chemistry Chat"])
+    # Create two columns: Left for main content (tabs), Right for chat
+    left_col, right_col = st.columns([2, 1])
     
-    # Tab 1: 3D Viewer
-    with tab1:
-        col1, col2 = st.columns([2, 1])
+    # LEFT COLUMN - Main content with tabs
+    with left_col:
+        # Main content area with tabs
+        tab1, tab2, tab3 = st.tabs(["🔬 3D Viewer", "🔄 Symmetry Analysis", "⚙️ Tools"])
         
-        with col1:
-            st.markdown("#### 3D Molecular Structure")
+        # Tab 1: 3D Viewer
+        with tab1:
+            col1, col2 = st.columns([2, 1])
             
-            # Molecule selector
-            molecule_name = st.selectbox(
-                "Select Molecule",
-                options=list(MOLECULE_STRUCTURES.keys()),
-                format_func=lambda x: x.title(),
-                key="molecule_selector"
-            )
+            with col1:
+                st.markdown("#### 3D Molecular Structure")
+                
+                # Molecule selector
+                molecule_name = st.selectbox(
+                    "Select Molecule",
+                    options=list(MOLECULE_STRUCTURES.keys()),
+                    format_func=lambda x: x.title(),
+                    key="molecule_selector"
+                )
+                
+                if 'selected_molecule' in st.session_state:
+                    molecule_name = st.session_state['selected_molecule']
+                
+                # Display 3D molecule
+                smiles = MOLECULE_STRUCTURES.get(molecule_name, "C")
+                viewer = create_3d_molecule(smiles, molecule_name)
+                showmol(viewer, height=450, width=600)
+                
+                # Molecule info
+                if molecule_name in MOLECULE_SYMMETRY:
+                    sym = MOLECULE_SYMMETRY[molecule_name]
+                    st.info(f"""
+                    **{sym['name']}** ({sym['formula']})  
+                    **Point Group:** {sym['point_group']}  
+                    **Description:** {sym['description']}
+                    """)
             
-            if 'selected_molecule' in st.session_state:
-                molecule_name = st.session_state['selected_molecule']
-            
-            # Display 3D molecule
-            smiles = MOLECULE_STRUCTURES.get(molecule_name, "C")
-            viewer = create_3d_molecule(smiles, molecule_name)
-            showmol(viewer, height=450, width=600)
-            
-            # Molecule info
-            if molecule_name in MOLECULE_SYMMETRY:
-                sym = MOLECULE_SYMMETRY[molecule_name]
-                st.info(f"""
-                **{sym['name']}** ({sym['formula']})  
-                **Point Group:** {sym['point_group']}  
-                **Description:** {sym['description']}
-                """)
-        
-        with col2:
-            st.markdown("#### 🎮 Viewer Controls")
-            st.markdown("""
-            - **🖱️ Drag** - Rotate view
-            - **🖱️ Right-click drag** - Pan
-            - **🖱️ Scroll** - Zoom in/out
-            - **🔄 Auto-rotate** - Animation enabled
-            """)
-            
-            st.markdown("#### 📊 Molecule Info")
-            st.markdown(f"""
-            - **Formula:** {MOLECULE_SYMMETRY.get(molecule_name, {}).get('formula', 'N/A')}
-            - **Atoms:** Varies by molecule
-            - **Bonds:** Varies by molecule
-            """)
-            
-            if molecule_name in MOLECULE_SYMMETRY:
-                with st.expander("🔍 Symmetry Elements"):
-                    for elem in MOLECULE_SYMMETRY[molecule_name]['elements']:
-                        st.markdown(f"- **{elem['type']}**: {elem['description']}")
-    
-    # Tab 2: Symmetry Analysis
-    with tab2:
-        st.markdown("#### 🔄 Symmetry Elements Visualization")
-        
-        col1, col2 = st.columns([1.5, 1])
-        
-        with col1:
-            sym_molecule = st.selectbox(
-                "Select Molecule for Symmetry Analysis",
-                options=list(MOLECULE_SYMMETRY.keys()),
-                format_func=lambda x: MOLECULE_SYMMETRY[x]['name'],
-                key="sym_selector"
-            )
-            
-            # Display symmetry visualization
-            fig = create_symmetry_visualization(sym_molecule)
-            if fig:
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Symmetry visualization loading...")
-        
-        with col2:
-            sym_data = MOLECULE_SYMMETRY.get(sym_molecule, {})
-            st.markdown(f"### {sym_data.get('name', 'N/A')}")
-            st.markdown(f"**Formula:** {sym_data.get('formula', 'N/A')}")
-            st.markdown(f"**Point Group:** `{sym_data.get('point_group', 'N/A')}`")
-            
-            st.markdown("#### Symmetry Elements")
-            for elem in sym_data.get('elements', []):
-                st.markdown(f"- **{elem['type']}**: {elem['description']}")
-            
-            st.markdown("#### Symmetry Guide")
-            with st.expander("📖 Understanding Symmetry"):
+            with col2:
+                st.markdown("#### 🎮 Viewer Controls")
                 st.markdown("""
-                **Rotation Axes (Cₙ):** Axis around which molecule rotates to appear identical.
-                
-                **Mirror Planes (σ):** Planes that reflect molecule onto itself.
-                
-                **Inversion Center (i):** Point where (x,y,z) → (-x,-y,-z).
-                
-                **Point Groups:** Classification of molecular symmetry.
+                - **🖱️ Drag** - Rotate view
+                - **🖱️ Right-click drag** - Pan
+                - **🖱️ Scroll** - Zoom in/out
+                - **🔄 Auto-rotate** - Animation enabled
                 """)
-    
-    # Tab 3: Tools
-    with tab3:
-        st.markdown("#### ⚙️ Chemistry Tools")
+                
+                st.markdown("#### 📊 Molecule Info")
+                st.markdown(f"""
+                - **Formula:** {MOLECULE_SYMMETRY.get(molecule_name, {}).get('formula', 'N/A')}
+                - **Atoms:** Varies by molecule
+                - **Bonds:** Varies by molecule
+                """)
+                
+                if molecule_name in MOLECULE_SYMMETRY:
+                    with st.expander("🔍 Symmetry Elements"):
+                        for elem in MOLECULE_SYMMETRY[molecule_name]['elements']:
+                            st.markdown(f"- **{elem['type']}**: {elem['description']}")
         
-        tool_tabs = st.tabs(["📊 Molar Mass", "⚖️ Equation Balancer", "🔍 PubChem Search"])
+        # Tab 2: Symmetry Analysis
+        with tab2:
+            st.markdown("#### 🔄 Symmetry Elements Visualization")
+            
+            col1, col2 = st.columns([1.5, 1])
+            
+            with col1:
+                sym_molecule = st.selectbox(
+                    "Select Molecule for Symmetry Analysis",
+                    options=list(MOLECULE_SYMMETRY.keys()),
+                    format_func=lambda x: MOLECULE_SYMMETRY[x]['name'],
+                    key="sym_selector"
+                )
+                
+                # Display symmetry visualization
+                fig = create_symmetry_visualization(sym_molecule)
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Symmetry visualization loading...")
+            
+            with col2:
+                sym_data = MOLECULE_SYMMETRY.get(sym_molecule, {})
+                st.markdown(f"### {sym_data.get('name', 'N/A')}")
+                st.markdown(f"**Formula:** {sym_data.get('formula', 'N/A')}")
+                st.markdown(f"**Point Group:** `{sym_data.get('point_group', 'N/A')}`")
+                
+                st.markdown("#### Symmetry Elements")
+                for elem in sym_data.get('elements', []):
+                    st.markdown(f"- **{elem['type']}**: {elem['description']}")
+                
+                st.markdown("#### Symmetry Guide")
+                with st.expander("📖 Understanding Symmetry"):
+                    st.markdown("""
+                    **Rotation Axes (Cₙ):** Axis around which molecule rotates to appear identical.
+                    
+                    **Mirror Planes (σ):** Planes that reflect molecule onto itself.
+                    
+                    **Inversion Center (i):** Point where (x,y,z) → (-x,-y,-z).
+                    
+                    **Point Groups:** Classification of molecular symmetry.
+                    """)
         
-        # Molar Mass Calculator
-        with tool_tabs[0]:
-            st.markdown("##### Calculate Molar Mass")
-            formula_input = st.text_input("Chemical Formula", placeholder="e.g., H2O, C6H12O6, NaCl")
+        # Tab 3: Tools
+        with tab3:
+            st.markdown("#### ⚙️ Chemistry Tools")
             
-            if st.button("Calculate", key="calc_molar"):
-                if formula_input:
-                    mass, elements = calculate_molar_mass(formula_input.upper())
-                    if mass:
-                        st.success(f"**Molar Mass:** {mass:.4f} g/mol")
-                        with st.expander("📋 Composition Details"):
-                            for elem in elements:
-                                st.write(elem)
-                    else:
-                        st.error(f"Error: {elements}")
+            tool_tabs = st.tabs(["📊 Molar Mass", "⚖️ Equation Balancer", "🔍 PubChem Search"])
             
-            st.markdown("---")
-            st.markdown("**Examples:**")
-            st.code("""
-            Water (H2O): 18.015 g/mol
-            Glucose (C6H12O6): 180.156 g/mol
-            Sodium Chloride (NaCl): 58.44 g/mol
-            """)
-        
-        # Equation Balancer
-        with tool_tabs[1]:
-            st.markdown("##### Balance Chemical Equations")
-            equation_input = st.text_input("Chemical Equation", placeholder="e.g., H2 + O2 -> H2O")
-            
-            if st.button("Balance", key="balance_eq"):
-                if equation_input:
-                    balanced = balance_equation(equation_input)
-                    if balanced:
-                        st.success(f"**Balanced Equation:**\n\n{balanced}")
-                    else:
-                        st.info("Try one of these examples:")
-                        st.code("""
-                        H2 + O2 -> H2O
-                        CH4 + O2 -> CO2 + H2O
-                        Fe + O2 -> Fe2O3
-                        """)
-        
-        # PubChem Search
-        with tool_tabs[2]:
-            st.markdown("##### Search PubChem Database")
-            compound_search = st.text_input("Compound Name", placeholder="e.g., aspirin, caffeine, glucose")
-            
-            if st.button("Search", key="search_pubchem"):
-                if compound_search:
-                    with st.spinner("Searching PubChem..."):
-                        result = search_pubchem(compound_search)
-                        if result:
-                            st.success("✅ Results found!")
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.metric("Formula", result['formula'])
-                                st.metric("InChIKey", result['inchikey'][:14] + "...")
-                            with col2:
-                                st.metric("Molecular Weight", f"{result['weight']} g/mol")
-                            st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{compound_search})")
+            # Molar Mass Calculator
+            with tool_tabs[0]:
+                st.markdown("##### Calculate Molar Mass")
+                formula_input = st.text_input("Chemical Formula", placeholder="e.g., H2O, C6H12O6, NaCl")
+                
+                if st.button("Calculate", key="calc_molar"):
+                    if formula_input:
+                        mass, elements = calculate_molar_mass(formula_input.upper())
+                        if mass:
+                            st.success(f"**Molar Mass:** {mass:.4f} g/mol")
+                            with st.expander("📋 Composition Details"):
+                                for elem in elements:
+                                    st.write(elem)
                         else:
-                            st.warning("Compound not found. Try a different name or check spelling.")
+                            st.error(f"Error: {elements}")
+                
+                st.markdown("---")
+                st.markdown("**Examples:**")
+                st.code("""
+                Water (H2O): 18.015 g/mol
+                Glucose (C6H12O6): 180.156 g/mol
+                Sodium Chloride (NaCl): 58.44 g/mol
+                """)
+            
+            # Equation Balancer
+            with tool_tabs[1]:
+                st.markdown("##### Balance Chemical Equations")
+                equation_input = st.text_input("Chemical Equation", placeholder="e.g., H2 + O2 -> H2O")
+                
+                if st.button("Balance", key="balance_eq"):
+                    if equation_input:
+                        balanced = balance_equation(equation_input)
+                        if balanced:
+                            st.success(f"**Balanced Equation:**\n\n{balanced}")
+                        else:
+                            st.info("Try one of these examples:")
+                            st.code("""
+                            H2 + O2 -> H2O
+                            CH4 + O2 -> CO2 + H2O
+                            Fe + O2 -> Fe2O3
+                            """)
+            
+            # PubChem Search
+            with tool_tabs[2]:
+                st.markdown("##### Search PubChem Database")
+                compound_search = st.text_input("Compound Name", placeholder="e.g., aspirin, caffeine, glucose")
+                
+                if st.button("Search", key="search_pubchem"):
+                    if compound_search:
+                        with st.spinner("Searching PubChem..."):
+                            result = search_pubchem(compound_search)
+                            if result:
+                                st.success("✅ Results found!")
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    st.metric("Formula", result['formula'])
+                                    st.metric("InChIKey", result['inchikey'][:14] + "...")
+                                with col2:
+                                    st.metric("Molecular Weight", f"{result['weight']} g/mol")
+                                st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{compound_search})")
+                            else:
+                                st.warning("Compound not found. Try a different name or check spelling.")
     
-    # Tab 4: Chemistry Chat - COMPLETELY RESTRUCTURED
-    with tab4:
+    # RIGHT COLUMN - Chat interface (completely separate from tabs)
+    with right_col:
+        st.markdown("### 💬 Chemistry Assistant")
+        
         # Initialize session state for chat if not exists
         if "chat_messages" not in st.session_state:
             st.session_state.chat_messages = [
                 {"role": "assistant", "content": "👋 Hello! I'm Ojo Chem Pro. Ask me about molecules, symmetry, equations, or chemistry concepts!"}
             ]
         
-        # Create a container for the chat display with custom styling
-        chat_display = st.container()
-        
-        # Display chat messages
-        with chat_display:
-            st.markdown('<div style="height: 450px; overflow-y: auto; padding: 1rem; background: #f8f9fa; border-radius: 10px; border: 1px solid #e0e0e0;">', unsafe_allow_html=True)
+        # Display chat messages in a scrollable container
+        chat_container = st.container()
+        with chat_container:
+            st.markdown('<div style="height: 450px; overflow-y: auto; padding: 1rem; background: #f8f9fa; border-radius: 10px; border: 1px solid #e0e0e0; margin-bottom: 1rem;">', unsafe_allow_html=True)
             for message in st.session_state.chat_messages:
                 if message["role"] == "user":
-                    st.markdown(f'<div style="text-align: right; margin-bottom: 0.5rem;"><span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 80%;">{message["content"]}</span></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="text-align: right; margin-bottom: 0.75rem;"><span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 90%; word-wrap: break-word;">{message["content"]}</span></div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div style="text-align: left; margin-bottom: 0.5rem;"><span style="background: #f0f2f6; color: #1e1e2f; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 80%; border: 1px solid #e0e0e0;">{message["content"]}</span></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="text-align: left; margin-bottom: 0.75rem;"><span style="background: #f0f2f6; color: #1e1e2f; padding: 0.5rem 1rem; border-radius: 18px; display: inline-block; max-width: 90%; border: 1px solid #e0e0e0; word-wrap: break-word;">{message["content"]}</span></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
-        # Quick suggestions
+        # Quick suggestion buttons
         st.markdown("#### Quick Suggestions")
-        col1, col2, col3, col4 = st.columns(4)
-        suggestions = [
-            ("🔬 Show benzene", "Show me benzene"),
-            ("🔄 Symmetry of water", "Symmetry of water"),
-            ("⚖️ Balance H2 + O2", "Balance: H2 + O2 -> H2O"),
-            ("📊 Molar mass glucose", "Molar mass of glucose")
-        ]
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔬 Show benzene", key="quick_benzene", use_container_width=True):
+                st.session_state.chat_messages.append({"role": "user", "content": "Show me benzene"})
+                response = get_chatbot_response("Show me benzene", safe_mode)
+                st.session_state.chat_messages.append({"role": "assistant", "content": response})
+                st.rerun()
+            
+            if st.button("⚖️ Balance H2 + O2", key="quick_balance", use_container_width=True):
+                st.session_state.chat_messages.append({"role": "user", "content": "Balance: H2 + O2 -> H2O"})
+                response = get_chatbot_response("Balance: H2 + O2 -> H2O", safe_mode)
+                st.session_state.chat_messages.append({"role": "assistant", "content": response})
+                st.rerun()
         
-        for i, (label, query) in enumerate(suggestions):
-            cols = [col1, col2, col3, col4]
-            with cols[i]:
-                if st.button(label, key=f"quick_sugg_{i}", use_container_width=True):
-                    # Add user message
-                    st.session_state.chat_messages.append({"role": "user", "content": query})
-                    # Get response
-                    response = get_chatbot_response(query, safe_mode)
-                    st.session_state.chat_messages.append({"role": "assistant", "content": response})
-                    st.rerun()
+        with col2:
+            if st.button("🔄 Symmetry of water", key="quick_symmetry", use_container_width=True):
+                st.session_state.chat_messages.append({"role": "user", "content": "Symmetry of water"})
+                response = get_chatbot_response("Symmetry of water", safe_mode)
+                st.session_state.chat_messages.append({"role": "assistant", "content": response})
+                st.rerun()
+            
+            if st.button("📊 Molar mass glucose", key="quick_molar", use_container_width=True):
+                st.session_state.chat_messages.append({"role": "user", "content": "Molar mass of glucose"})
+                response = get_chatbot_response("Molar mass of glucose", safe_mode)
+                st.session_state.chat_messages.append({"role": "assistant", "content": response})
+                st.rerun()
         
-        # Chat input - placed at the end, not inside any container
+        # Chat input - at the top level of the column, NOT inside any container
         user_input = st.chat_input("Ask me about chemistry...", key="chemistry_chat_input")
         
         if user_input:
